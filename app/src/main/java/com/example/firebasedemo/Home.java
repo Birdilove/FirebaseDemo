@@ -1,12 +1,15 @@
 package com.example.firebasedemo;
 
 import android.Manifest;
+import android.app.DownloadManager;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
@@ -18,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -27,6 +31,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -38,6 +43,7 @@ import java.util.Objects;
 
 public class Home extends AppCompatActivity {
     private static final String TAG = "Collection ";
+    private static final String DIRECTORY_DOWNLOADS = String.valueOf(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS));;
     private StorageReference mStorageRef;
     Uri selectedImageUrl_1;
     private static final int STORAGE_PERMISSION_CODE = 101;
@@ -146,6 +152,7 @@ public class Home extends AppCompatActivity {
             final ProgressDialog progressDialog = new ProgressDialog(this);
             progressDialog.setTitle("Uploading");
             progressDialog.show();
+
             final StorageReference ref = mStorageRef.child("images/mountains.jpg");
             UploadTask uploadTask = ref.putFile(filePath);
             Task<Uri> urlTask = uploadTask.continueWithTask(task -> {
@@ -170,7 +177,7 @@ public class Home extends AppCompatActivity {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivityForResult(intent, 1);
     }
-
+    
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -182,17 +189,10 @@ public class Home extends AppCompatActivity {
 
     public void CloudStorageDownloadaFile() throws IOException {
         if (selectedImageUrl_1 == null) {
-            Toast.makeText(this, "Upload a file first.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "No new file uploaded, downloading default file.", Toast.LENGTH_SHORT).show();
+            download(Home.this, "mountains","jpg", DIRECTORY_DOWNLOADS, "https://firebasestorage.googleapis.com/v0/b/fir-demo-c7630.appspot.com/o/images%2Fmountains.jpg?alt=media&token=7255a21e-b542-4fed-a94e-96b5e20cdf9a");
         } else {
-            StorageReference gsReference = storage.getReferenceFromUrl(selectedImageUrl_1.toString());
-            final File rootPath = new File(Environment.getExternalStorageDirectory(), "Download");
-            final File myFile = new File(rootPath, "cloudFirestoreFile.jpg");
-            gsReference.getFile(myFile).
-                    addOnSuccessListener(taskSnapshot ->
-                            Toast.makeText(Home.this, "File downloaded in storage.",
-                                    Toast.LENGTH_SHORT)
-                                    .show()).addOnFailureListener(exception -> {
-            });
+            download(Home.this, "cloudFirestoreFile","jpg", DIRECTORY_DOWNLOADS, selectedImageUrl_1.toString());
         }
     }
 
@@ -224,5 +224,16 @@ public class Home extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Please enter a valid entry.", Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void download(Context context, String fileName, String fileExtension, String destinationDirectory, String url){
+        //Implementing Download Manager
+        DownloadManager downloadManager = (DownloadManager)context.
+                getSystemService(Context.DOWNLOAD_SERVICE);
+        Uri uri = Uri.parse(url);
+        DownloadManager.Request request = new DownloadManager.Request(uri);
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+        request.setDestinationInExternalFilesDir(context, destinationDirectory, fileName + fileExtension);
+        downloadManager.enqueue(request);
     }
 }
