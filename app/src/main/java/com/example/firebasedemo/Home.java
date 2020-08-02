@@ -190,7 +190,7 @@ public class Home extends AppCompatActivity {
     public void CloudStorageDownloadaFile() throws IOException {
         if (selectedImageUrl_1 == null) {
             Toast.makeText(this, "No new file uploaded, downloading default file.", Toast.LENGTH_SHORT).show();
-            download(Home.this, "mountains","jpg", DIRECTORY_DOWNLOADS, "https://firebasestorage.googleapis.com/v0/b/fir-demo-c7630.appspot.com/o/images%2Fmountains.jpg?alt=media&token=7255a21e-b542-4fed-a94e-96b5e20cdf9a");
+            download(Home.this, "mountains","jpg", DIRECTORY_DOWNLOADS, "https://firebasestorage.googleapis.com/v0/b/fir-demo-c7630.appspot.com/o/storage%2Femulated%2F0%2FPictures%2FInstagram%2FIMG_20200708_200239_551.jpg?alt=media&token=e394e98b-07f3-49b6-bedd-8c4465baef24");
         } else {
             download(Home.this, "cloudFirestoreFile","jpg", DIRECTORY_DOWNLOADS, selectedImageUrl_1.toString());
         }
